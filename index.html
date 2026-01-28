@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>search for company!</title>
+    <style>
+        :root {
+            --brand-color: #1a73e8;
+            --bg-color: #f8f9fa;
+            --sidebar-bg: #ffffff;
+            --border-color: #dadce0;
+            --text-main: #202124;
+            --text-sub: #5f6368;
+            --hover-color: #f1f3f4;
+            --active-blue: #e8f0fe;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* サイドバー */
+        #sidebar {
+            width: 320px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--brand-color);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .add-btn {
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 28px;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(60,64,67,0.3);
+            margin-bottom: 25px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .add-btn:hover { background-color: #185abc; }
+
+        #companyList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .company-item {
+            padding: 12px 20px;
+            border-radius: 0 24px 24px 0;
+            margin-right: -20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+        .company-item:hover { background-color: var(--hover-color); }
+        .company-item.active { background-color: var(--active-blue); color: var(--brand-color); font-weight: bold; }
+
+        .delete-icon { font-size: 18px; opacity: 0.4; }
+        .delete-icon:hover { color: #d93025; opacity: 1; }
+
+        /* メインコンテンツ */
+        #main {
+            flex-grow: 1;
+            padding: 30px 50px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        /* ユーザビリティガイド */
+        .step-guide {
+            background: #e7f3ff;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+            border-left: 5px solid var(--brand-color);
+            line-height: 1.6;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .comp-title { font-size: 1.8rem; margin: 0; }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 2px rgba(60,64,67,0.3);
+        }
+
+        /* 入力UI */
+        .field-group { margin-bottom: 25px; }
+        label { display: block; font-size: 0.85rem; color: var(--text-main); margin-bottom: 8px; font-weight: 600; }
+        .sub-label { display: block; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 8px; line-height: 1.4; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            background: #fafafa;
+        }
+        textarea { height: 110px; resize: vertical; }
+
+        /* SWOTグリッド */
+        .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .swot-box { padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .swot-box.s { border-top: 5px solid #34a853; }
+        .swot-box.w { border-top: 5px solid #ea4335; }
+        .swot-box.o { border-top: 5px solid #4285f4; }
+        .swot-box.t { border-top: 5px solid #fbbc05; }
+
+        .tab-menu { display: flex; gap: 30px; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); }
+        .tab-item { cursor: pointer; color: var(--text-sub); padding-bottom: 10px; font-weight: 500; border-bottom: 3px solid transparent; }
+        .tab-item.active { color: var(--brand-color); border-bottom-color: var(--brand-color); }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        .save-btn-container { position: sticky; bottom: 0; background: rgba(248, 249, 250, 0.95); padding: 20px 0; text-align: right; border-top: 1px solid #ddd; }
+        .btn-primary { background: var(--brand-color); color: white; border: none; padding: 12px 40px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        
+        .share-controls { margin-top: 10px; display: flex; gap: 5px; }
+        .btn-outline { flex: 1; background: transparent; border: 1px solid var(--border-color); color: var(--text-sub); padding: 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="brand-logo">🔍 search for company!</div>
+    <button class="add-btn" onclick="addNew()">＋ 企業をリストに追加</button>
+    
+    <ul id="companyList"></ul>
+    
+    <div style="padding: 15px 0; border-top: 1px solid #eee;">
+        <label style="font-size: 11px; color: var(--text-sub); margin-bottom: 8px; display: block;">バックアップ・共有</label>
+        <div class="share-controls">
+            <button class="btn-outline" onclick="exportData()">📤 書き出し</button>
+            <button class="btn-outline" onclick="document.getElementById('importFile').click()">📥 読み込み</button>
+        </div>
+        <input type="file" id="importFile" onchange="importData(event)" accept=".json">
+    </div>
+</div>
+
+<div id="main">
+    <div id="guide" class="step-guide">
+        <strong>💡 使い方のガイド:</strong> <br>
+        1. 企業ごとに「企業概要」を入力し、公式サイトをすぐ見れるようにしましょう。<br>
+        2. 「自己分析・軸」タブで、その企業に向けたあなたの考えを整理します。<br>
+        3. 3CやSWOTを使って「世の中の動き（問い）」に対し「自分の武器（答え）」をどうぶつけるか言語化しましょう。
+    </div>
+
+    <div class="header-section">
+        <h1 id="displayTitle" class="comp-title">企業名</h1>
+        <a id="hpLink" href="#" target="_blank" style="color: var(--brand-color); font-weight: 600; text-decoration: none; display: none;">🌐 公式サイトを開く ↗</a>
+    </div>
+
+    <div class="card">
+        <div class="tab-menu">
+            <div class="tab-item active" onclick="switchTab(event, 'tab1')">企業概要</div>
+            <div class="tab-item" onclick="switchTab(event, 'tab2')">自己分析・軸</div>
+            <div class="tab-item" onclick="switchTab(event, 'tab3')">3C分析</div>
+            <div class="tab-item" onclick="switchTab(event, 'tab4')">SWOT分析</div>
+            <div class="tab-item" onclick="switchTab(event, 'tab5')">キャリア・メモ</div>
+        </div>
+
+        <div id="tab1" class="tab-pane active">
+            <div class="field-group">
+                <label>公式サイト URL</label>
+                <input type="text" id="compUrl" placeholder="https://..." onchange="updateHp()">
+            </div>
+            <div class="field-group"><label>理念・ビジョン</label><textarea id="vision" placeholder="企業の掲げる目標や社会的な役割"></textarea></div>
+            <div class="field-group"><label>事業内容・強み</label><textarea id="business" placeholder="主要なサービス、収益モデル、独自の技術など"></textarea></div>
+        </div>
+
+        <div id="tab2" class="tab-pane">
+            <div class="field-group">
+                <label>就活軸</label>
+                <span class="sub-label">企業選びで絶対に譲れない条件は何ですか？</span>
+                <textarea id="my_axis"></textarea>
+            </div>
+            <div class="field-group">
+                <label>自己PR</label>
+                <span class="sub-label">あなたの最大の強みは何ですか？</span>
+                <textarea id="my_pr"></textarea>
+            </div>
+            <div class="field-group">
+                <label>学生時代に最も力を入れたこと（がくちか）</label>
+                <span class="sub-label">具体的なエピソードと得られた成果。</span>
+                <textarea id="my_gakuchika"></textarea>
+            </div>
+            <div class="field-group">
+                <label>困難に直面したこと</label>
+                <span class="sub-label">直面した壁と、それをどう乗り越えたか。</span>
+                <textarea id="my_hardship"></textarea>
+            </div>
+        </div>
+
+        <div id="tab3" class="tab-pane">
+            <span class="sub-label" style="margin-bottom: 15px; display: block;">競合他社と比較し、その企業の「独自性」を見つけます。</span>
+            <div class="field-group"><label>Customer (市場・顧客の悩み)</label><textarea id="customer"></textarea></div>
+            <div class="field-group"><label>Competitor (競合他社の動向)</label><textarea id="competitor"></textarea></div>
+            <div class="field-group"><label>Company (その企業独自の強み)</label><textarea id="company_strength"></textarea></div>
+        </div>
+
+        <div id="tab4" class="tab-pane">
+            <span class="sub-label" style="margin-bottom: 15px; display: block; font-weight: bold; color: #d93025;">※「機会・脅威」は、自社の力では変えられない「外の世界の動き」を記入します。</span>
+            <div class="swot-grid">
+                <div class="swot-box s">
+                    <label>Strength (強み)</label>
+                    <span class="sub-label"><strong>「〇〇なら、他社（他者）に負けません！」</strong></span>
+                    <textarea id="s" placeholder="【内部要因】独自の技術、優秀な人材、ブランド力など"></textarea>
+                </div>
+                <div class="swot-box w">
+                    <label>Weakness (弱み)</label>
+                    <span class="sub-label"><strong>「今はまだ〇〇が足りないので、強化が必要です。」</strong></span>
+                    <textarea id="w" placeholder="【内部要因】不足しているリソース、改善すべき課題など"></textarea>
+                </div>
+                <div class="swot-box o">
+                    <label>Opportunity (機会)</label>
+                    <span class="sub-label"><strong>「今、世の中では〇〇が流行っていて、チャンスです。」</strong></span>
+                    <textarea id="o" placeholder="【外部要因】DXの加速、法改正、市場の拡大などビジネスの追い風。"></textarea>
+                </div>
+                <div class="swot-box t">
+                    <label>Threat (脅威)</label>
+                    <span class="sub-label"><strong>「世の中で〇〇という変化があり、このままだと危ないです。」</strong></span>
+                    <textarea id="t" placeholder="【外部要因】競合の参入、少子高齢化、原材料の高騰などビジネスの逆風。"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab5" class="tab-pane">
+            <div class="field-group">
+                <label>この企業でのキャリアパス</label>
+                <span class="sub-label">入社後、3年後、5年後にどのような職種や役割に就きたいか。</span>
+                <textarea id="career_path"></textarea>
+            </div>
+            <div class="field-group">
+                <label>企業別メモ / 選考ログ</label>
+                <span class="sub-label">面接の振り返りや、OB訪問で聞いた生の声。</span>
+                <textarea id="company_memo"></textarea>
+            </div>
+        </div>
+
+        <div class="save-btn-container">
+            <button class="btn-primary" onclick="doSave()">すべてのデータを保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const storageKey = 'search_for_company_v2';
+    let dataStore = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    let activeId = null;
+
+    // 保存対象の全フィールド
+    const fields = [
+        'compUrl', 'vision', 'business', 
+        'my_axis', 'my_pr', 'my_gakuchika', 'my_hardship',
+        'customer', 'competitor', 'company_strength', 
+        's', 'w', 'o', 't', 
+        'career_path', 'company_memo'
+    ];
+
+    function refreshSidebar() {
+        const list = document.getElementById('companyList');
+        list.innerHTML = '';
+        Object.keys(dataStore).sort().forEach(id => {
+            const li = document.createElement('li');
+            li.className = `company-item ${id === activeId ? 'active' : ''}`;
+            li.innerHTML = `<span>🏢 ${id}</span> <span class="delete-icon" onclick="doDelete('${id}')">×</span>`;
+            li.onclick = (e) => { if(!e.target.classList.contains('delete-icon')) loadComp(id); };
+            list.appendChild(li);
+        });
+    }
+
+    function addNew() {
+        const name = prompt("分析したい企業名を入力してください");
+        if (name && !dataStore[name]) {
+            dataStore[name] = {};
+            fields.forEach(f => dataStore[name][f] = '');
+            loadComp(name);
+        } else if (dataStore[name]) {
+            alert('その企業は既に追加されています');
+        }
+    }
+
+    function loadComp(id) {
+        activeId = id;
+        document.getElementById('main').style.display = 'block';
+        document.getElementById('displayTitle').innerText = id;
+        fields.forEach(f => document.getElementById(f).value = dataStore[id][f] || '');
+        updateHp();
+        refreshSidebar();
+    }
+
+    function updateHp() {
+        const val = document.getElementById('compUrl').value;
+        const btn = document.getElementById('hpLink');
+        if (val) {
+            btn.href = val.startsWith('http') ? val : 'https://' + val;
+            btn.style.display = 'inline-block';
+        } else { btn.style.display = 'none'; }
+    }
+
+    function doSave() {
+        if (!activeId) return;
+        fields.forEach(f => dataStore[activeId][f] = document.getElementById(f).value);
+        localStorage.setItem(storageKey, JSON.stringify(dataStore));
+        alert('「' + activeId + '」のデータを保存しました');
+    }
+
+    function doDelete(id) {
+        event.stopPropagation();
+        if (confirm(id + ' をリストから削除しますか？')) {
+            delete dataStore[id];
+            localStorage.setItem(storageKey, JSON.stringify(dataStore));
+            if (activeId === id) document.getElementById('main').style.display = 'none';
+            refreshSidebar();
+        }
+    }
+
+    function switchTab(e, tabId) {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        e.target.classList.add('active');
+    }
+
+    function exportData() {
+        const dataStr = JSON.stringify(dataStore, null, 2);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `shukatsu-note-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                dataStore = JSON.parse(e.target.result);
+                localStorage.setItem(storageKey, JSON.stringify(dataStore));
+                refreshSidebar();
+                alert('データを読み込みました');
+            } catch (err) {
+                alert('エラー：ファイル形式が正しくありません');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    refreshSidebar();
+</script>
+</body>
+</html>
